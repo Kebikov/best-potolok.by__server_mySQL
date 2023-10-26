@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const {pool, promisePool} = require('../helpers/pool');
+const {promisePool} = require('../helpers/pool');
 require('dotenv').config();
 
 
@@ -15,15 +15,14 @@ class TokenService {
         return {accessToken, refreshToken, expiresIn: 3600}
     }
     //. save(сохранение токена в BD) 
-    async saveTokenInDB(userId, userType, refreshToken) {
-        //const existsUser = await Token.findOne({user: userId});
-        const [existsUser] = await promisePool.query(`SELECT * FROM  WHERE id = ${userId} LIMIT 1`);
-        if(Array.isArray(existsUser) && existsUser.length === 0) {
-            existsUser[0].refreshToken = refreshToken;
-            return existsUser.save();
+    async saveTokenInDB(userId, refreshToken) {
+        try {
+            const [updateUser] = await promisePool.query(`UPDATE user SET token = '${refreshToken}' WHERE id = ${userId}`);
+            return updateUser;
+        }catch (error) {
+            console.log('Error in Function saveTokenInDB >>> ', error);
         }
-
-        return token;
+        
     }	
     //. validateRefresh(проверка токена) 
     validateAccessToken(accessToken) {

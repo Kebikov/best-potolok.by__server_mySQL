@@ -2,28 +2,22 @@ const express = require('express');
 const router = express.Router({mergeParams: true});
 const chalk = require('chalk');
 const auth = require('../middleware/auth.middleware');
-const Management = require('../models/Management');
+const {promisePool, isArrayEmpty} = require('../helpers/pool');
 
-router.get('/test', async (req, res) => {
-    try {
-        res.send(JSON.stringify({res: 'Привет от Админа !'}));
-    }catch (error) {
-        console.log('Error in Function  >>> ', error);
-    }
-});
 
 //= router.get('/management')
 router.get('/management', async (req, res) => {
     try {
-        const management = await Management.find();   
+        const [management] = await promisePool.query(`SELECT * FROM management`); 
 
-        if(!management[0]) return res.status(200).json( {error: {message: 'OBJECT_NOT_FOUND'}} );
+        if(isArrayEmpty(management)) return res.status(200).json( {error: {message: 'OBJECT_NOT_FOUND'}} );
         management[0].cursUsd = management[0].cursUsd + '';
+        management[0].isShowBaner = management[0].isShowBaner === 1 ? 'true' : 'false';
 
         return res.status(200).send(management[0]);
         // management[0] = { 
-        //     _id: object,
-        //     isShowBaner: boolean, 
+        //     id: number,
+        //     isShowBaner: number(1 | 0), 
         //     cursUsd: string,
         //     __v: 0
         //   }
@@ -34,8 +28,8 @@ router.get('/management', async (req, res) => {
 
 
 //= router.post('/management')
-router.post('/management', auth('Admin'), async (req, res) => {
-    console.log(chalk.red('/management'));
+router.post('/management', auth, async (req, res) => {
+    console.log(chalk.red('auth/management'));
 
     try {
         const body = req.body;
@@ -45,19 +39,17 @@ router.post('/management', auth('Admin'), async (req, res) => {
         // }
 
         if('cursUsd' in body && 'isShowBaner' in body && body.isShowBaner !== null && body.cursUsd !== null) {
-            const management = await Management.find(); 
 
-            if(!management[0]) {
-                const newManagement = await Management.create({...body});
+            const [management] = await promisePool.query(`SELECT * FROM management`);
+            
+            if(isArrayEmpty(management)) {
+                const [managementInsert] = await promisePool.query(`INSERT INTO management (isShowBaner, cursUsd) VALUES (${body.isShowBaner ? 1 : 0}, ${body.cursUsd})`);
                 return res.status(200).json( {server: {message: 'OBJECT_CREATED'}} );
             } else {
-                management[0].isShowBaner = body.isShowBaner;
-                management[0].cursUsd = body.cursUsd;
-
-                const newManagement = await management[0].save(); 
-                
+                const idObject = management[0].id;
+                const [managementUpdate] = await promisePool.query(`UPDATE management SET isShowBaner = ${body.isShowBaner ? 1 : 0}, cursUsd = ${body.cursUsd} WHERE id = ${idObject}`);
                 return res.status(200).json( {server: {message: 'OBJECT_UPDATE'}} );
-            }
+            } 
 
         } else {
             return res.status(400).json( {error: {message: 'DATA_IS_NOT_VALID'}} );

@@ -5,24 +5,34 @@ const TelegramBot = require('node-telegram-bot-api');
 
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
 
+
 router.post('/telegram', async (req, res) => { 
     try {
 
         function sendTelegram(id, msg) {
             bot.sendMessage(id, msg);
         }
+        
 
         const chatIdArray = JSON.parse(process.env.CHAT_ID_ARRAY); 
-        const body = req.body;
-        if(body && chatIdArray && Array.isArray(chatIdArray)) {
 
-            const message = `\nФорма отправки: ${body?.title ? body.title : 'нет информации'}\nИмя клиена: ${body?.name ? body.name : 'нет информации'}\nТелефон: ${body.tel ? body.tel : 'нет информации'}`;
+        const body = req.body;
+        // body = {
+        //     title: string,
+        //     name: string,
+        //     tel: string
+        // }
+        console.log(body);
+
+        if(body && chatIdArray && Array.isArray(chatIdArray)) {
+            const message = `Новое сообщение c сайта best-potolok.by:\nФорма отправки: ${body?.title ? body.title : 'нет информации'}\nИмя клиена: ${body?.name ? body.name : 'нет информации'}\nТелефон: ${body.tel ? body.tel : 'нет информации'}`;
             
             chatIdArray.forEach(user => {
                 sendTelegram(user, message);
             });
-            
+
             return res.status(200).send( {server: {message: 'MESSAGE_SEND'}} );
+            
         } else {
             return res.status(200).send( {error: {message: 'NOT_INFO'}} );
         }
@@ -32,4 +42,6 @@ router.post('/telegram', async (req, res) => {
     }
 });
 
-module.exports = router;
+module.exports = router; 
+
+

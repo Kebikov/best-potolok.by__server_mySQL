@@ -11,5 +11,13 @@ const pool = mysql.createPool({
 
 const promisePool = pool.promise();
 
+const isArrayEmpty = (array) => {
+    if(Array.isArray(array) && array.length === 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
-module.exports = {pool, promisePool};
+// Экспорт пула и функции закрытия
+module.exports = { pool, promisePool, isArrayEmpty };
