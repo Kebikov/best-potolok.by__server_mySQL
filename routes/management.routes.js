@@ -3,7 +3,16 @@ const router = express.Router({mergeParams: true});
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api'); 
 
-const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
+//const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
+
+const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, {
+    polling: true,
+    request: {
+        agentOptions: {
+            rejectUnauthorized: false
+        }
+    }
+});
 
 
 router.post('/telegram', async (req, res) => { 
